@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Session;
 use App\Models\User;
+use Illuminate\Support\Facades\Http;
 use Hash;
   
 class AuthController extends Controller
@@ -18,7 +19,7 @@ class AuthController extends Controller
      */
     public function index()
     {
-        return view('auth.login');
+        return 'You need to login';
     }  
       
     /**
@@ -28,7 +29,7 @@ class AuthController extends Controller
      */
     public function registration()
     {
-        return view('auth.registration');
+        return 'You must register';
     }
       
     /**
@@ -44,12 +45,14 @@ class AuthController extends Controller
         ]);
    
         $credentials = $request->only('email', 'password');
+        
         if (Auth::attempt($credentials)) {
-            return redirect()->intended('dashboard')
-                        ->withSuccess('You have Successfully loggedin');
+            $currentPage = $request->page ? $request->page : 1;
+            $response = Http::get(env('PUNK_URL_API').'beers/?page=' . $currentPage);
+            return ['You have Successfully loggedin: ', $response->json()];
         }
   
-        return redirect("login")->withSuccess('Oppes! You have entered invalid credentials');
+        return ('Oppes! You have entered invalid credentials');
     }
       
     /**
@@ -68,7 +71,7 @@ class AuthController extends Controller
         $data = $request->all();
         $check = $this->create($data);
          
-        return redirect("dashboard")->withSuccess('You have Successfully loggedin');
+        return 'You have Successfully loggedin';
     }
     
     /**
@@ -76,13 +79,17 @@ class AuthController extends Controller
      *
      * @return response()
      */
-    public function dashboard()
+    public function dashboard(Request $request)
     {
         if(Auth::check()){
-            return view('dashboard');
+            $currentPage = $request->page ? $request->page : 1;
+            $response = Http::get(env('PUNK_URL_API').'beers/?page=' . $currentPage);
+             view('components.punkapi', ['data' =>
+            $response->json(), 'currentPage' => $currentPage]);
+            return ( $response->json());
         }
   
-        return redirect("login")->withSuccess('Opps! You do not have access');
+        return ('Opps! You do not have access');
     }
     
     /**
@@ -108,6 +115,6 @@ class AuthController extends Controller
         Session::flush();
         Auth::logout();
   
-        return Redirect('login');
+        return 'logout';
     }
 }

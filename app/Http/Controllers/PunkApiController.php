@@ -12,15 +12,14 @@ use Illuminate\Support\Facades\Auth;
 
 class PunkApiController extends Controller
 {
-    public function index(\Illuminate\Http\Request $request)
+    public function index(Request $request)
     {
         if (Auth::check()) {
             $currentPage = $request->page ? $request->page : 1;
             $response = Http::get(env('PUNK_URL_API').'beers/?page=' . $currentPage);
-            return view('components.punkapi', ['data' =>
-            $response->json(), 'currentPage' => $currentPage]);
+            return $response->json();
         }
 
-        return redirect("login")->withSuccess('Opps! You do not have access');
+        return ('Opps! You do not have access');
     }
 }
